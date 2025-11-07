@@ -1,6 +1,6 @@
 # PyGUI
 
-[![PyPI](https://img.shields.io/pypi/v/guigui.svg)](https://pypi.org/project/guigui/)
+[![PyPI](https://img.shields.io/pypi/v/guiguigui.svg)](https://pypi.org/project/guiguigui/)
 [![Tests](https://github.com/sdpkjc/PyGUI/workflows/Tests/badge.svg)](https://github.com/sdpkjc/PyGUI/actions)
 [![Code Quality](https://github.com/sdpkjc/PyGUI/workflows/Code%20Quality/badge.svg)](https://github.com/sdpkjc/PyGUI/actions)
 [![codecov](https://codecov.io/gh/sdpkjc/PyGUI/branch/main/graph/badge.svg)](https://codecov.io/gh/sdpkjc/PyGUI)
@@ -21,18 +21,18 @@ A minimalist cross-platform GUI automation library for Python.
 
 ```bash
 # Using uv (recommended)
-uv pip install guigui
+uv pip install guiguigui
 
 # macOS
-uv pip install "guigui[macos]"
+uv pip install "guiguigui[macos]"
 
 # Linux
-uv pip install "guigui[linux]"
+uv pip install "guiguigui[linux]"
 
 # Using pip
-pip install guigui
-pip install "guigui[macos]"  # macOS
-pip install "guigui[linux]"  # Linux
+pip install guiguigui
+pip install "guiguigui[macos]"  # macOS
+pip install "guiguigui[linux]"  # Linux
 ```
 
 ## Quick Start

@@ -10,7 +10,7 @@ The project uses **Trusted Publishing** (recommended by PyPI), which doesn't req
 
 1. Go to https://pypi.org/manage/account/publishing/
 2. Add a new pending publisher:
-   - **PyPI Project Name**: `guigui`
+   - **PyPI Project Name**: `guiguigui`
    - **Owner**: `sdpkjc`
    - **Repository name**: `PyGUI`
    - **Workflow name**: `publish.yml`
@@ -26,7 +26,7 @@ Update version in `pyproject.toml`:
 
 ```toml
 [project]
-name = "guigui"
+name = "guiguigui"
 version = "0.1.0"  # Update this
 ```
 
@@ -135,8 +135,8 @@ git push origin v0.2.0rc1
 
 After release:
 
-- [ ] Verify package on PyPI: https://pypi.org/project/guigui/
-- [ ] Test installation: `pip install guigui`
+- [ ] Verify package on PyPI: https://pypi.org/project/guiguigui/
+- [ ] Test installation: `pip install guiguigui`
 - [ ] Check GitHub Release: https://github.com/sdpkjc/PyGUI/releases
 - [ ] Update documentation if needed
 - [ ] Announce release (Twitter, Reddit, etc.)
