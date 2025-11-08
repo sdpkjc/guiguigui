@@ -107,6 +107,12 @@ class X11Backend(Backend):
 
         return keycode
 
+    def _get_window_handle(self, window: WindowInfo | int) -> int:
+        """Get window handle from WindowInfo or int."""
+        if isinstance(window, int):
+            return window
+        return window.handle
+
     # Mouse methods
     def mouse_position(self) -> Point:
         """Get current mouse position."""
@@ -209,18 +215,18 @@ class X11Backend(Backend):
         """Press key."""
         keycode = self._get_key_code(key)
         fake_input(self._display, X.KeyPress, detail=keycode)
-        self._display.sync()
+        self._display.flush()
 
     def key_release(self, key: Key | str) -> None:
         """Release key."""
         keycode = self._get_key_code(key)
         fake_input(self._display, X.KeyRelease, detail=keycode)
-        self._display.sync()
+        self._display.flush()
 
     def key_is_pressed(self, key: Key | str) -> bool:
         """Check if key is pressed."""
         keycode = self._get_key_code(key)
-        keyboard = self._root.query_keymap()
+        keyboard = self._display.query_keymap()
         # keyboard is a list of 32 bytes
         byte_index = keycode // 8
         bit_index = keycode % 8
@@ -439,28 +445,32 @@ class X11Backend(Backend):
                     return w
         return None
 
-    def focus_window(self, window: WindowInfo) -> None:
+    def focus_window(self, window: WindowInfo | int) -> None:
         """Focus window."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
         win.set_input_focus(X.RevertToParent, X.CurrentTime)
         win.configure(stack_mode=X.Above)
         self._display.sync()
 
-    def move_window(self, window: WindowInfo, x: int, y: int) -> None:
+    def move_window(self, window: WindowInfo | int, x: int, y: int) -> None:
         """Move window."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
         win.configure(x=x, y=y)
         self._display.sync()
 
-    def resize_window(self, window: WindowInfo, width: int, height: int) -> None:
+    def resize_window(self, window: WindowInfo | int, width: int, height: int) -> None:
         """Resize window."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
         win.configure(width=width, height=height)
         self._display.sync()
 
-    def set_window_state(self, window: WindowInfo, state: WindowState) -> None:
+    def set_window_state(self, window: WindowInfo | int, state: WindowState) -> None:
         """Set window state."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
 
         if state == WindowState.MINIMIZED:
             win.unmap()
@@ -481,10 +491,11 @@ class X11Backend(Backend):
 
         self._display.sync()
 
-    def get_window_state(self, window: WindowInfo) -> WindowState:
+    def get_window_state(self, window: WindowInfo | int) -> WindowState:
         """Get window state."""
         try:
-            win = self._display.create_resource_object("window", window.handle)
+            handle = self._get_window_handle(window)
+            win = self._display.create_resource_object("window", handle)
             attrs = win.get_attributes()
 
             if attrs.map_state != X.IsViewable:
@@ -503,9 +514,10 @@ class X11Backend(Backend):
         except Exception:
             return WindowState.NORMAL
 
-    def close_window(self, window: WindowInfo) -> None:
+    def close_window(self, window: WindowInfo | int) -> None:
         """Close window."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
 
         # Try graceful close first
         try:
@@ -524,9 +536,10 @@ class X11Backend(Backend):
             win.destroy()
             self._display.sync()
 
-    def set_window_opacity(self, window: WindowInfo, opacity: float) -> None:
+    def set_window_opacity(self, window: WindowInfo | int, opacity: float) -> None:
         """Set window opacity (0.0-1.0)."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
 
         # _NET_WM_WINDOW_OPACITY atom
         atom_opacity = self._display.intern_atom("_NET_WM_WINDOW_OPACITY")
@@ -539,9 +552,10 @@ class X11Backend(Backend):
         )
         self._display.sync()
 
-    def set_window_always_on_top(self, window: WindowInfo, always_on_top: bool) -> None:
+    def set_window_always_on_top(self, window: WindowInfo | int, always_on_top: bool) -> None:
         """Set window always on top."""
-        win = self._display.create_resource_object("window", window.handle)
+        handle = self._get_window_handle(window)
+        win = self._display.create_resource_object("window", handle)
 
         atom_state = self._display.intern_atom("_NET_WM_STATE")
         atom_above = self._display.intern_atom("_NET_WM_STATE_ABOVE")
