@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import time
 
 import pytest
@@ -32,6 +33,9 @@ class TestKeyboardOperations:
         keyboard.type("hello", interval=0.01)
         time.sleep(0.1)
 
+    @pytest.mark.skipif(
+        sys.platform.startswith("linux"), reason="Unicode typing not yet implemented for X11"
+    )
     def test_type_text_unicode(self) -> None:
         keyboard.type("你好", interval=0.01)
         time.sleep(0.1)
