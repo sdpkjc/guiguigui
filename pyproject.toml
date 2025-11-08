@@ -161,6 +161,7 @@ markers = [
 ]
 testpaths = ["tests"]
 addopts = "-v --tb=short"
+junit_family = "xunit2"
 
 [tool.coverage.run]
 source = ["guiguigui"]

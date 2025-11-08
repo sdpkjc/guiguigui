@@ -57,19 +57,32 @@ jobs:
 
     - name: Run unit tests
       run: |
-        uv run pytest tests/unit/ -v --cov=guiguigui --cov-report=xml --cov-report=term
+        uv run pytest tests/unit/ -v --cov=guiguigui --cov-report=xml --cov-report=term --junitxml=junit-unit.xml
+
+    - name: Run platform tests
+      run: |
+        uv run pytest tests/platform/ -v --junitxml=junit-platform.xml
 
     - name: Run integration tests (macOS only)
       if: runner.os == 'macOS'
       run: |
-        uv run pytest tests/integration/ -v -m integration
+        uv run pytest tests/integration/ -v -m integration --junitxml=junit-integration.xml
 
     - name: Run integration tests (Linux with Xvfb)
       if: runner.os == 'Linux'
       run: |
-        uv run pytest tests/integration/ -v -m integration
+        uv run pytest tests/integration/ -v -m integration --junitxml=junit-integration.xml
       env:
         DISPLAY: :99
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: junit-unit.xml,junit-platform.xml,junit-integration.xml
+        flags: ${{ matrix.os }}
+        name: test-results-${{ matrix.os }}-py3.10
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
