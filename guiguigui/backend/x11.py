@@ -610,6 +610,14 @@ class X11Backend(Backend):
         if owner == X.NONE:
             return ""
 
+        # If we own the clipboard, return our stored text directly
+        # This avoids the complexity of handling SelectionRequest from ourselves
+        if hasattr(self, "_clipboard_window") and hasattr(owner, "id"):
+            if owner.id == self._clipboard_window.id:
+                if hasattr(self, "_clipboard_text"):
+                    return self._clipboard_text.decode("utf-8", errors="ignore")
+                return ""
+
         # Request clipboard content to be stored in our root window's property
         self._root.convert_selection(
             atom_clipboard,  # selection
