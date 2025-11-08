@@ -113,6 +113,34 @@ class X11Backend(Backend):
             return window
         return window.handle
 
+    def _safe_flush(self) -> None:
+        """Safely flush display, catching errors from malformed error objects.
+
+        Some X11 extensions (like XRandR) can generate error objects that
+        don't have all expected attributes (e.g., sequence_number), causing
+        AttributeError in python-xlib's error handling. This is a known issue
+        in headless/Xvfb environments.
+        """
+        try:
+            self._display.flush()
+        except AttributeError:
+            # Ignore AttributeError from malformed error objects (e.g., BadRRModeError)
+            pass
+
+    def _safe_sync(self) -> None:
+        """Safely sync display, catching errors from malformed error objects.
+
+        Some X11 extensions (like XRandR) can generate error objects that
+        don't have all expected attributes (e.g., sequence_number), causing
+        AttributeError in python-xlib's error handling. This is a known issue
+        in headless/Xvfb environments.
+        """
+        try:
+            self._display.sync()
+        except AttributeError:
+            # Ignore AttributeError from malformed error objects (e.g., BadRRModeError)
+            pass
+
     # Mouse methods
     def mouse_position(self) -> Point:
         """Get current mouse position."""
@@ -129,11 +157,11 @@ class X11Backend(Backend):
                 cur_x = int(start.x + (x - start.x) * t)
                 cur_y = int(start.y + (y - start.y) * t)
                 fake_input(self._display, X.MotionNotify, x=cur_x, y=cur_y)
-                self._display.sync()
+                self._safe_sync()
                 time.sleep(duration / steps)
         else:
             fake_input(self._display, X.MotionNotify, x=x, y=y)
-            self._display.sync()
+            self._safe_sync()
 
     def mouse_move_rel(self, dx: int, dy: int, duration: float = 0.0) -> None:
         """Move mouse relative to current position."""
@@ -154,7 +182,7 @@ class X11Backend(Backend):
             raise ValueError(f"Unsupported button: {button}")
 
         fake_input(self._display, X.ButtonPress, detail=x_button)
-        self._display.sync()
+        self._safe_sync()
 
     def mouse_release(self, button: MouseButton) -> None:
         """Release mouse button."""
@@ -170,7 +198,7 @@ class X11Backend(Backend):
             raise ValueError(f"Unsupported button: {button}")
 
         fake_input(self._display, X.ButtonRelease, detail=x_button)
-        self._display.sync()
+        self._safe_sync()
 
     def mouse_scroll(self, dx: int, dy: int) -> None:
         """Scroll mouse wheel."""
@@ -193,7 +221,7 @@ class X11Backend(Backend):
                 fake_input(self._display, X.ButtonPress, detail=6)
                 fake_input(self._display, X.ButtonRelease, detail=6)
 
-        self._display.sync()
+        self._safe_sync()
 
     def mouse_is_pressed(self, button: MouseButton) -> bool:
         """Check if mouse button is pressed."""
@@ -215,13 +243,13 @@ class X11Backend(Backend):
         """Press key."""
         keycode = self._get_key_code(key)
         fake_input(self._display, X.KeyPress, detail=keycode)
-        self._display.flush()
+        self._safe_flush()
 
     def key_release(self, key: Key | str) -> None:
         """Release key."""
         keycode = self._get_key_code(key)
         fake_input(self._display, X.KeyRelease, detail=keycode)
-        self._display.flush()
+        self._safe_flush()
 
     def key_is_pressed(self, key: Key | str) -> bool:
         """Check if key is pressed."""
@@ -451,21 +479,21 @@ class X11Backend(Backend):
         win = self._display.create_resource_object("window", handle)
         win.set_input_focus(X.RevertToParent, X.CurrentTime)
         win.configure(stack_mode=X.Above)
-        self._display.sync()
+        self._safe_sync()
 
     def move_window(self, window: WindowInfo | int, x: int, y: int) -> None:
         """Move window."""
         handle = self._get_window_handle(window)
         win = self._display.create_resource_object("window", handle)
         win.configure(x=x, y=y)
-        self._display.sync()
+        self._safe_sync()
 
     def resize_window(self, window: WindowInfo | int, width: int, height: int) -> None:
         """Resize window."""
         handle = self._get_window_handle(window)
         win = self._display.create_resource_object("window", handle)
         win.configure(width=width, height=height)
-        self._display.sync()
+        self._safe_sync()
 
     def set_window_state(self, window: WindowInfo | int, state: WindowState) -> None:
         """Set window state."""
@@ -489,7 +517,7 @@ class X11Backend(Backend):
         elif state == WindowState.NORMAL:
             win.map()
 
-        self._display.sync()
+        self._safe_sync()
 
     def get_window_state(self, window: WindowInfo | int) -> WindowState:
         """Get window state."""
@@ -530,11 +558,11 @@ class X11Backend(Backend):
                 data=(32, [atom_delete, X.CurrentTime, 0, 0, 0]),
             )
             win.send_event(ev, event_mask=X.NoEventMask)
-            self._display.sync()
+            self._safe_sync()
         except Exception:
             # Force close
             win.destroy()
-            self._display.sync()
+            self._safe_sync()
 
     def set_window_opacity(self, window: WindowInfo | int, opacity: float) -> None:
         """Set window opacity (0.0-1.0)."""
@@ -550,7 +578,7 @@ class X11Backend(Backend):
         win.change_property(
             atom_opacity, self._display.intern_atom("CARDINAL"), 32, [opacity_value]
         )
-        self._display.sync()
+        self._safe_sync()
 
     def set_window_always_on_top(self, window: WindowInfo | int, always_on_top: bool) -> None:
         """Set window always on top."""
@@ -567,7 +595,7 @@ class X11Backend(Backend):
             window=win, client_type=atom_state, data=(32, [action, atom_above, 0, 0, 0])
         )
         self._root.send_event(ev, event_mask=X.SubstructureRedirectMask)
-        self._display.sync()
+        self._safe_sync()
 
     # Clipboard methods
     def clipboard_get_text(self) -> str:
@@ -589,7 +617,7 @@ class X11Backend(Backend):
             atom_property,  # property to store result
             X.CurrentTime,
         )
-        self._display.sync()
+        self._safe_sync()
 
         # Wait for SelectionNotify event (with timeout)
         start_time = time.time()
@@ -606,7 +634,7 @@ class X11Backend(Backend):
                         self._root.convert_selection(
                             atom_clipboard, atom_string, atom_property, X.CurrentTime
                         )
-                        self._display.sync()
+                        self._safe_sync()
                         continue
 
                     # Read the property
@@ -615,7 +643,7 @@ class X11Backend(Backend):
                         if prop and prop.value:
                             # Delete the property after reading
                             self._root.delete_property(atom_property)
-                            self._display.sync()
+                            self._safe_sync()
 
                             # Decode the value
                             if isinstance(prop.value, bytes):
@@ -642,7 +670,7 @@ class X11Backend(Backend):
 
         # Take ownership of the CLIPBOARD selection
         self._clipboard_window.set_selection_owner(atom_clipboard, X.CurrentTime)
-        self._display.flush()
+        self._safe_flush()
 
         # Process pending events to ensure ownership is established
         # This is important in virtual X11 environments like Xvfb
@@ -716,7 +744,7 @@ class X11Backend(Backend):
 
         # Send SelectionNotify event back to requestor
         event_obj.requestor.send_event(selection_notify)
-        self._display.sync()
+        self._safe_sync()
 
     def clipboard_clear(self) -> None:
         """Clear clipboard."""
