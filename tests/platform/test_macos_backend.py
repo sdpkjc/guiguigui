@@ -755,3 +755,569 @@ class TestMacOSCoordinateSystem:
         # Allow some margin for multi-monitor setups
         assert pos.x <= rect.x + rect.width + 1000
         assert pos.y <= rect.y + rect.height + 1000
+
+
+class TestMacOSMouseButtonEdgeCases:
+    """Test mouse button edge cases including unsupported buttons."""
+
+    def test_mouse_press_unsupported_button_x1(self) -> None:
+        """Test that pressing X1 button raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X1 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_press(MouseButton.X1)
+
+    def test_mouse_press_unsupported_button_x2(self) -> None:
+        """Test that pressing X2 button raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X2 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_press(MouseButton.X2)
+
+    def test_mouse_release_unsupported_button_x1(self) -> None:
+        """Test that releasing X1 button raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X1 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_release(MouseButton.X1)
+
+    def test_mouse_release_unsupported_button_x2(self) -> None:
+        """Test that releasing X2 button raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X2 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_release(MouseButton.X2)
+
+    def test_mouse_is_pressed_unsupported_button_x1(self) -> None:
+        """Test that checking X1 button state raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X1 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_is_pressed(MouseButton.X1)
+
+    def test_mouse_is_pressed_unsupported_button_x2(self) -> None:
+        """Test that checking X2 button state raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import MouseButton
+
+        backend = MacOSBackend()
+
+        # X2 button is not supported on macOS
+        with pytest.raises(ValueError, match="Unsupported button"):
+            backend.mouse_is_pressed(MouseButton.X2)
+
+
+class TestMacOSKeyboardUnicodeEdgeCases:
+    """Test keyboard unicode typing edge cases."""
+
+    def test_key_type_unicode_uppercase_with_shift(self) -> None:
+        """Test that uppercase characters use shift key."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Uppercase characters should trigger shift key handling
+        # This tests lines 236-249 in macos.py
+        backend.key_type_unicode("A")
+        backend.key_type_unicode("Z")
+        backend.key_type_unicode("HELLO")
+
+    def test_key_type_unicode_mixed_case(self) -> None:
+        """Test typing mixed case string."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Mixed case should use shift for uppercase letters
+        backend.key_type_unicode("HelloWorld")
+        backend.key_type_unicode("TeSt123")
+
+    def test_key_type_unicode_unmapped_characters(self) -> None:
+        """Test typing characters not in key map uses unicode method."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # These characters are not in _key_code_map, so should use
+        # CGEventKeyboardSetUnicodeString (lines 250-262)
+        backend.key_type_unicode("©")  # Copyright symbol
+        backend.key_type_unicode("™")  # Trademark symbol
+        backend.key_type_unicode("€")  # Euro symbol
+        backend.key_type_unicode("±")  # Plus-minus symbol
+
+    def test_key_type_unicode_mixed_mapped_unmapped(self) -> None:
+        """Test typing mix of mapped and unmapped characters."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Mix of regular characters and unicode symbols
+        backend.key_type_unicode("a©b™c")
+        backend.key_type_unicode("Price: €99")
+
+
+class TestMacOSKeyboardInvalidKey:
+    """Test keyboard with invalid key codes."""
+
+    def test_key_press_invalid_key(self) -> None:
+        """Test that pressing invalid key raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Invalid key should raise ValueError
+        with pytest.raises(ValueError, match="Unknown key"):
+            backend.key_press("invalid_key_xyz")
+
+    def test_key_release_invalid_key(self) -> None:
+        """Test that releasing invalid key raises ValueError."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Invalid key should raise ValueError
+        with pytest.raises(ValueError, match="Unknown key"):
+            backend.key_release("nonexistent_key")
+
+    def test_get_key_code_with_key_enum(self) -> None:
+        """Test _get_key_code with Key enum."""
+        from guiguigui.backend.macos import MacOSBackend
+        from guiguigui.core.types import Key
+
+        backend = MacOSBackend()
+
+        # Should work with Key enum
+        key_code = backend._get_key_code(Key.SHIFT)
+        assert isinstance(key_code, int)
+        assert key_code == backend._key_code_map["shift"]
+
+
+class TestMacOSKeyCodeMapping:
+    """Test comprehensive key code mapping."""
+
+    def test_all_letters_mapped(self) -> None:
+        """Test that all letters a-z are mapped."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        for char in "abcdefghijklmnopqrstuvwxyz":
+            assert char in backend._key_code_map, f"Letter {char} should be mapped"
+            assert isinstance(backend._key_code_map[char], int)
+
+    def test_all_digits_mapped(self) -> None:
+        """Test that all digits 0-9 are mapped."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        for digit in "0123456789":
+            assert digit in backend._key_code_map, f"Digit {digit} should be mapped"
+            assert isinstance(backend._key_code_map[digit], int)
+
+    def test_modifier_keys_mapped(self) -> None:
+        """Test that modifier keys are mapped."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        modifiers = ["shift", "ctrl", "control", "alt", "option", "cmd", "command", "meta"]
+        for mod in modifiers:
+            assert mod in backend._key_code_map, f"Modifier {mod} should be mapped"
+
+    def test_function_keys_mapped(self) -> None:
+        """Test that function keys F1-F15 are mapped."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        for i in range(1, 16):
+            key = f"f{i}"
+            assert key in backend._key_code_map, f"Function key {key} should be mapped"
+
+    def test_reverse_key_map(self) -> None:
+        """Test that reverse key map is built correctly."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Check reverse map exists
+        assert hasattr(backend, "_reverse_key_map")
+        assert isinstance(backend._reverse_key_map, dict)
+
+        # Verify reverse mapping exists for all codes
+        # Note: Some keys like "enter"/"return" share the same code,
+        # so the reverse map will only have one entry per code
+        for _key, code in backend._key_code_map.items():
+            assert code in backend._reverse_key_map
+            # The reverse map should map back to one of the keys that shares this code
+            reverse_key = backend._reverse_key_map[code]
+            assert backend._key_code_map[reverse_key] == code
+
+
+class TestMacOSWindowFiltering:
+    """Test window filtering edge cases."""
+
+    def test_list_windows_visible_only(self) -> None:
+        """Test listing windows with visible_only flag."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Test with visible_only=True
+        visible_windows = backend.list_windows(visible_only=True)
+        assert isinstance(visible_windows, list)
+
+        # Test with visible_only=False
+        all_windows = backend.list_windows(visible_only=False)
+        assert isinstance(all_windows, list)
+
+        # All windows should include visible ones (might be more)
+        assert len(all_windows) >= len(visible_windows)
+
+    def test_window_info_completeness(self) -> None:
+        """Test that WindowInfo has all expected fields."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        windows = backend.list_windows(visible_only=False)
+
+        if not windows:
+            pytest.skip("No windows available for testing")
+
+        window = windows[0]
+
+        # Check all fields are present
+        assert hasattr(window, "handle")
+        assert hasattr(window, "title")
+        assert hasattr(window, "class_name")
+        assert hasattr(window, "pid")
+        assert hasattr(window, "process_name")
+        assert hasattr(window, "rect")
+        assert hasattr(window, "client_rect")
+        assert hasattr(window, "state")
+        assert hasattr(window, "is_visible")
+        assert hasattr(window, "is_active")
+        assert hasattr(window, "is_always_on_top")
+        assert hasattr(window, "opacity")
+
+        # Verify window has non-zero size (zero-size windows are filtered)
+        assert window.rect.width > 0
+        assert window.rect.height > 0
+
+
+class TestMacOSWindowPositioning:
+    """Test window positioning methods."""
+
+    def test_get_window_at_valid_position(self) -> None:
+        """Test getting window at a specific position."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        windows = backend.list_windows(visible_only=True)
+
+        if not windows:
+            pytest.skip("No windows available for testing")
+
+        # Get first window's center position
+        window = windows[0]
+        center_x = window.rect.x + window.rect.width // 2
+        center_y = window.rect.y + window.rect.height // 2
+
+        # Should find a window at this position
+        found_window = backend.get_window_at(center_x, center_y)
+
+        # Might find the window or another window on top of it
+        # Just verify it returns None or a WindowInfo
+        assert found_window is None or hasattr(found_window, "handle")
+
+    def test_get_window_at_empty_position(self) -> None:
+        """Test getting window at empty screen position."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Try position far off screen where no window should be
+        result = backend.get_window_at(-10000, -10000)
+
+        # Should return None when no window at position
+        assert result is None
+
+    def test_get_window_at_origin(self) -> None:
+        """Test getting window at screen origin."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Test at origin (0, 0)
+        result = backend.get_window_at(0, 0)
+
+        # Should return None or a valid window
+        assert result is None or hasattr(result, "handle")
+
+
+class TestMacOSDisplayEdgeCases:
+    """Test display-related edge cases."""
+
+    def test_display_scale_factor(self) -> None:
+        """Test that display scale factor is valid."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+
+        assert len(displays) > 0
+
+        for display in displays:
+            # Scale should be positive and reasonable (1.0, 2.0 for Retina, etc.)
+            assert display.scale > 0
+            assert display.scale <= 3.0  # Common scales: 1.0, 1.5, 2.0, 2.5
+
+    def test_display_refresh_rate(self) -> None:
+        """Test that display refresh rate is valid or defaults to 60."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+
+        assert len(displays) > 0
+
+        for display in displays:
+            # Refresh rate should be positive (defaults to 60.0 if 0)
+            assert display.refresh_rate > 0
+            # Common refresh rates: 60, 120, 144
+            assert 30 <= display.refresh_rate <= 240
+
+    def test_display_physical_size(self) -> None:
+        """Test that display physical size matches logical size times scale."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+
+        assert len(displays) > 0
+
+        for display in displays:
+            # Physical size should be logical size * scale
+            expected_width = int(display.bounds.width * display.scale)
+            expected_height = int(display.bounds.height * display.scale)
+
+            assert display.physical_size.width == expected_width
+            assert display.physical_size.height == expected_height
+
+    def test_display_work_area_valid(self) -> None:
+        """Test that display work area is valid."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+
+        assert len(displays) > 0
+
+        for display in displays:
+            # Work area should exist and have positive dimensions
+            assert display.work_area.width > 0
+            assert display.work_area.height > 0
+
+            # Work area should be within or equal to bounds
+            # (On macOS, work_area is same as bounds currently)
+            assert display.work_area.width <= display.bounds.width
+            assert display.work_area.height <= display.bounds.height
+
+    def test_one_primary_display(self) -> None:
+        """Test that exactly one display is marked as primary."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+
+        assert len(displays) > 0
+
+        primary_count = sum(1 for d in displays if d.is_primary)
+        assert primary_count == 1, "Exactly one display should be primary"
+
+    def test_virtual_screen_encompasses_all_displays(self) -> None:
+        """Test that virtual screen rect encompasses all displays."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        displays = backend.get_displays()
+        virtual_rect = backend.get_virtual_screen_rect()
+
+        assert len(displays) > 0
+
+        for display in displays:
+            # Each display should be within virtual screen bounds
+            # Display left edge >= virtual left edge
+            assert display.bounds.x >= virtual_rect.x
+            # Display top edge >= virtual top edge
+            assert display.bounds.y >= virtual_rect.y
+            # Display right edge <= virtual right edge
+            assert display.bounds.x + display.bounds.width <= virtual_rect.x + virtual_rect.width
+            # Display bottom edge <= virtual bottom edge
+            assert display.bounds.y + display.bounds.height <= virtual_rect.y + virtual_rect.height
+
+
+class TestMacOSClipboardEdgeCases:
+    """Test clipboard edge cases."""
+
+    def test_clipboard_empty_string(self) -> None:
+        """Test setting empty string to clipboard."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Save original
+        original = backend.clipboard_get_text()
+
+        # Set empty string
+        backend.clipboard_set_text("")
+        result = backend.clipboard_get_text()
+
+        assert result == ""
+
+        # Restore original
+        backend.clipboard_set_text(original)
+
+    def test_clipboard_unicode_text(self) -> None:
+        """Test setting Unicode text to clipboard."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Save original
+        original = backend.clipboard_get_text()
+
+        # Set Unicode text
+        test_text = "Hello 世界 🌍"
+        backend.clipboard_set_text(test_text)
+        result = backend.clipboard_get_text()
+
+        assert result == test_text
+
+        # Restore original
+        backend.clipboard_set_text(original)
+
+    def test_clipboard_multiline_text(self) -> None:
+        """Test setting multiline text to clipboard."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Save original
+        original = backend.clipboard_get_text()
+
+        # Set multiline text
+        test_text = "Line 1\nLine 2\nLine 3"
+        backend.clipboard_set_text(test_text)
+        result = backend.clipboard_get_text()
+
+        assert result == test_text
+
+        # Restore original
+        backend.clipboard_set_text(original)
+
+    def test_clipboard_long_text(self) -> None:
+        """Test setting very long text to clipboard."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Save original
+        original = backend.clipboard_get_text()
+
+        # Set long text (10,000 characters)
+        test_text = "A" * 10000
+        backend.clipboard_set_text(test_text)
+        result = backend.clipboard_get_text()
+
+        assert result == test_text
+        assert len(result) == 10000
+
+        # Restore original
+        backend.clipboard_set_text(original)
+
+
+class TestMacOSFocusWindow:
+    """Test window focus operations."""
+
+    def test_focus_window_with_valid_handle(self) -> None:
+        """Test focusing a window with valid handle."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+        windows = backend.list_windows(visible_only=True)
+
+        if len(windows) < 1:
+            pytest.skip("Need at least one window for testing")
+
+        # Focus should not raise for valid handle
+        handle = windows[0].handle
+        backend.focus_window(handle)
+
+    def test_focus_window_with_invalid_handle(self) -> None:
+        """Test focusing a window with invalid handle."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        # Invalid handle should not raise, just do nothing
+        backend.focus_window(999999999)
+
+
+class TestMacOSPermissionCheck:
+    """Test permission checking methods."""
+
+    def test_check_permissions_structure(self) -> None:
+        """Test that check_permissions returns correct structure."""
+        from guiguigui.backend.macos import MacOSBackend
+
+        backend = MacOSBackend()
+
+        try:
+            perms = backend.check_permissions()
+
+            # Should have all expected keys
+            assert "mouse" in perms
+            assert "keyboard" in perms
+            assert "window" in perms
+            assert "accessibility" in perms
+            assert "screen_recording" in perms
+
+            # All values should be boolean
+            assert isinstance(perms["mouse"], bool)
+            assert isinstance(perms["keyboard"], bool)
+            assert isinstance(perms["window"], bool)
+            assert isinstance(perms["accessibility"], bool)
+            assert isinstance(perms["screen_recording"], bool)
+
+            # These should always be True
+            assert perms["mouse"] is True
+            assert perms["keyboard"] is True
+            assert perms["window"] is True
+            # screen_recording is False by default
+            assert perms["screen_recording"] is False
+
+        except AttributeError:
+            # AXIsProcessTrusted might not be available in some environments
+            pytest.skip("Permission check API not available")
