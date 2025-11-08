@@ -172,6 +172,7 @@ linux = [
 ]
 macos = [
     { name = "pyobjc-core" },
+    { name = "pyobjc-framework-carbon" },
     { name = "pyobjc-framework-cocoa" },
     { name = "pyobjc-framework-quartz" },
 ]
@@ -181,6 +182,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0" },
     { name = "pyobjc-core", marker = "extra == 'macos'", specifier = ">=10.0" },
+    { name = "pyobjc-framework-carbon", marker = "extra == 'macos'", specifier = ">=10.0" },
     { name = "pyobjc-framework-cocoa", marker = "extra == 'macos'", specifier = ">=10.0" },
     { name = "pyobjc-framework-quartz", marker = "extra == 'macos'", specifier = ">=10.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0" },
@@ -345,6 +347,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/08/a3/1b26c438c78821e5a82b9c02f7b19a86097aeb2c51132d06e159acc22dc2/pyobjc_core-12.0-cp313-cp313t-macosx_10_13_universal2.whl", hash = "sha256:5c617551e0ab860c49229fcec0135a5cde702485f22254ddc17205eb24b7fc55", size = 721370, upload-time = "2025-10-21T07:51:55.981Z" },
     { url = "https://files.pythonhosted.org/packages/35/b1/6df7d4b0d9f0088855a59f6af59230d1191f78fa84ca68851723272f1916/pyobjc_core-12.0-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:c2709ff43ac5c2e9e2c574ae515d3aa0e470345847a4d96c5d4a04b1b86e966d", size = 672302, upload-time = "2025-10-21T07:52:39.445Z" },
     { url = "https://files.pythonhosted.org/packages/f8/10/3a029797c0a22c730ee0d0149ac34ab27afdf51667f96aa23a8ebe7dc3c9/pyobjc_core-12.0-cp314-cp314t-macosx_10_15_universal2.whl", hash = "sha256:eb6b987e53291e7cafd8f71a80a2dd44d7afec4202a143a3e47b75cb9cdb5716", size = 713255, upload-time = "2025-10-21T07:53:25.478Z" },
+]
+
+[[package]]
+name = "pyobjc-framework-carbon"
+version = "12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyobjc-core" },
+    { name = "pyobjc-framework-cocoa" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0a/86/e5212c091d614f5097fb34d06820fda00d4dc2dcc0ac68d102b8cb0a79ac/pyobjc_framework_carbon-12.0.tar.gz", hash = "sha256:ad24c6c9def13669f9b6dc2350b39ac96270f4918223d1abf4d8a70990eed84c", size = 37320, upload-time = "2025-10-21T08:27:45.651Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7e/aa/56b0bc78523ca3ecdf6e72a8b786b7204364c57d1b2db17bb50cfed1091d/pyobjc_framework_carbon-12.0-py2.py3-none-any.whl", hash = "sha256:b58d0f558f3f31e981c26a1074fce8a32bf0aa6f9c6bccefdb2828a4f9c46eac", size = 4635, upload-time = "2025-10-21T07:57:21.073Z" },
 ]
 
 [[package]]

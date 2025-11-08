@@ -252,15 +252,24 @@ class MacOSBackend(Backend):
                 CGEventPost(kCGHIDEventTap, up_event)
 
     def get_keyboard_layout(self) -> str:
-        from Quartz import (
-            TISCopyCurrentKeyboardInputSource,
-            TISGetInputSourceProperty,
-            kTISPropertyInputSourceID,
-        )
+        try:
+            # Try to import from Carbon (requires pyobjc-framework-Carbon)
+            from Carbon.HIToolbox import (
+                TISCopyCurrentKeyboardInputSource,
+                TISGetInputSourceProperty,
+                kTISPropertyInputSourceID,
+            )
 
-        source = TISCopyCurrentKeyboardInputSource()
-        source_id = TISGetInputSourceProperty(source, kTISPropertyInputSourceID)
-        return str(source_id) if source_id else "unknown"
+            source = TISCopyCurrentKeyboardInputSource()
+            if source:
+                source_id = TISGetInputSourceProperty(source, kTISPropertyInputSourceID)
+                if source_id:
+                    return str(source_id)
+        except ImportError:
+            # Carbon framework not available, return default
+            pass
+
+        return "com.apple.keylayout.US"  # Default US layout
 
     def get_displays(self) -> list[DisplayInfo]:
         displays: list[DisplayInfo] = []
