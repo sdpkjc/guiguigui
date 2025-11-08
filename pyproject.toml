@@ -146,10 +146,13 @@ disable_error_code = ["import-not-found"]
 [[tool.mypy.overrides]]
 module = [
     "guiguigui.backend.win32",
-    "guiguigui.backend.x11",
     "guiguigui.backend.wayland",
 ]
 ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["Xlib", "Xlib.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 markers = [

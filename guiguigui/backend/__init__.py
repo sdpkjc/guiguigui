@@ -43,7 +43,7 @@ def _load_backend() -> Backend:
 
         from .x11 import X11Backend
 
-        return X11Backend()  # type: ignore[abstract]
+        return X11Backend()
 
     else:
         raise NotImplementedError(f"Platform {platform} is not supported")
